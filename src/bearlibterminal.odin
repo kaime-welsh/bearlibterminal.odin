@@ -1,111 +1,117 @@
 package bearlibterminal
 
 import "core:c"
+import "core:c/libc"
+import "core:fmt"
+import "core:strings"
 
 // NOTE: Need to setup differentiation between target platforms and their libraries
 // For now only supports 64-bit windows
-foreign import bearlibterminal "Windows64/BearLibTerminal.lib"
+when ODIN_OS == .Windows {
+    foreign import bearlibterminal "Windows64/BearLibTerminal.lib"
+}
 
 dimensions_t_ :: struct {
-	width:  c.int,
-	height: c.int,
+    width:  c.int,
+    height: c.int,
 }
 
-color_t :: distinct c.int32_t
+color_t :: distinct i32
 
 @(link_prefix = "terminal_")
+@(default_calling_convention = "c")
 foreign bearlibterminal {
-	open :: proc() -> c.int ---
-	close :: proc() ---
-	refresh :: proc() ---
-	clear :: proc() ---
-	clear_area :: proc(x: c.int, y: c.int, w: c.int, h: c.int) ---
-	crop :: proc(x: c.int, y: c.int, w: c.int, h: c.int) ---
-	layer :: proc(index: c.int) ---
-	color :: proc(color: color_t) ---
-	bkcolor :: proc(color: color_t) ---
-	composition :: proc(mode: c.int) ---
-	put :: proc(x: c.int, y: c.int, code: c.int) ---
-	put_ext :: proc(x: c.int, y: c.int, dx: c.int, dy: c.int, code: c.int, corners: ^color_t) ---
-	pick :: proc(x: c.int, y: c.int, index: c.int) -> c.int ---
-	pick_color :: proc(x: c.int, y: c.int, index: c.int) -> color_t ---
-	pick_bkcolor :: proc(x: c.int, y: c.int) -> color_t ---
-	has_input :: proc() -> c.int ---
-	state :: proc(code: c.int) -> c.int ---
-	read :: proc() -> c.int ---
-	peek :: proc() -> c.int ---
-	delay :: proc(period: c.int) ---
-	put_array :: proc(x: c.int, y: c.int, w: c.int, h: c.int, data: ^c.uint8_t, row_stride: c.int, column_stride: c.int, layout: rawptr, char_size: c.int) -> c.int ---
+    open :: proc() -> c.int ---
+    close :: proc() ---
+    refresh :: proc() ---
+    clear :: proc() ---
+    clear_area :: proc(x, y: c.int, w, h: c.int) ---
+    crop :: proc(x, y: c.int, w, h: c.int) ---
+    layer :: proc(index: c.int) ---
+    color :: proc(color: color_t) ---
+    bkcolor :: proc(color: color_t) ---
+    composition :: proc(mode: c.int) ---
+    put :: proc(x, y: c.int, code: c.int) ---
+    put_ext :: proc(x, y: c.int, dx, dy: c.int, code: c.int, corners: ^[4]color_t) ---
+    pick :: proc(x, y: c.int, index: c.int) -> c.int ---
+    pick_color :: proc(x, y: c.int, index: c.int) -> color_t ---
+    pick_bkcolor :: proc(x, y: c.int) -> color_t ---
+    has_input :: proc() -> c.int ---
+    state :: proc(code: c.int) -> c.int ---
+    read :: proc() -> c.int ---
+    peek :: proc() -> c.int ---
+    delay :: proc(period: c.int) ---
+    put_array :: proc(x, y: c.int, w, h: c.int, data: [^]c.uint8_t, row_stride: c.int, column_stride: c.int, layout: rawptr, char_size: c.int) -> c.int ---
 }
 
-@(private)
+@private
+@(link_prefix = "terminal_")
+@(default_calling_convention = "c")
 foreign bearlibterminal {
-	terminal_set8 :: proc(value: ^c.int8_t) -> c.int ---
-	// WARN: unimplemented
-	terminal_set16 :: proc(value: ^c.int16_t) -> c.int ---
-	terminal_set32 :: proc(value: ^c.int32_t) -> c.int ---
+    set8 :: proc(value: cstring) -> c.int ---
+    // ! WARN: unimplemented
+    set16 :: proc(value: [^]u16) -> c.int ---
+    set32 :: proc(value: [^]rune) -> c.int ---
 
-	terminal_font8 :: proc(name: ^c.int8_t) ---
-	// WARN: unimplemented
-	terminal_font16 :: proc(name: ^c.int16_t) ---
-	terminal_font32 :: proc(name: ^c.int32_t) ---
+    font8 :: proc(name: cstring) ---
+    // ! WARN: unimplemented
+    font16 :: proc(name: [^]u16) ---
+    font32 :: proc(name: [^]rune) ---
 
-	terminal_print_ext8 :: proc(x: c.int, y: c.int, w: c.int, h: c.int, align: c.int, s: ^c.int8_t, out_w: ^c.int, out_h: ^c.int) ---
-	// WARN: unimplemented
-	terminal_print_ext16 :: proc(x: c.int, y: c.int, w: c.int, h: c.int, align: c.int, s: ^c.int16_t, out_w: ^c.int, out_h: ^c.int) ---
-	terminal_print_ext32 :: proc(x: c.int, y: c.int, w: c.int, h: c.int, align: c.int, s: ^c.int32_t, out_w: ^c.int, out_h: ^c.int) ---
+    print_ext8 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: cstring, out_w, out_h: ^c.int) ---
+    // ! WARN: unimplemented
+    print_ext16 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
+    print_ext32 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
 
-	terminal_measure_ext8 :: proc(w: c.int, h: c.int, s: ^c.int8_t, out_w: ^c.int, out_h: ^c.int) ---
+    measure_ext8 :: proc(w, h: c.int, s: cstring, out_w, out_h: ^c.int) ---
+    // ! WARN: unimplemented
+    measure_ext16 :: proc(w, h: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
+    measure_ext32 :: proc(w, h: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
 
-	// WARN: unimplemented
-	terminal_measure_ext16 :: proc(w: c.int, h: c.int, s: ^c.int16_t, out_w: ^c.int, out_h: ^c.int) ---
-	terminal_measure_ext32 :: proc(w: c.int, h: c.int, s: ^c.int32_t, out_w: ^c.int, out_h: ^c.int) ---
+    read_str8 :: proc(x, y: c.int, buffer: [^]byte, max: c.int) -> c.int ---
+    // ! WARN: unimplemented
+    read_str16 :: proc(x, y: c.int, buffer: [^]u16, max: c.int) -> c.int ---
+    read_str32 :: proc(x, y: c.int, buffer: [^]rune, max: c.int) -> c.int ---
 
-	// BUG: Currently read_str crashes here, need to investigate
-	terminal_read_str8 :: proc(x: c.int, y: c.int, buffer: ^c.int8_t, max: c.int) -> c.int ---
-	// WARN: unimplemented
-	terminal_read_str16 :: proc(x: c.int, y: c.int, buffer: ^c.int16_t, max: c.int) -> c.int ---
-	terminal_read_str32 :: proc(x: c.int, y: c.int, buffer: ^c.int32_t, max: c.int) -> c.int ---
+    get8 :: proc(key: cstring, default: cstring) -> cstring ---
+    // ! WARN: unimplemented
+    get16 :: proc(key: [^]u16, default: [^]u16) -> [^]u16 ---
+    get32 :: proc(key: [^]rune, default: [^]rune) -> [^]rune ---
 
-	terminal_get8 :: proc(key: ^c.int8_t, default_: ^c.int8_t) -> ^c.int8_t ---
-	// WARN: unimplemented
-	terminal_get16 :: proc(key: ^c.int16_t, default_: ^c.int16_t) -> ^c.int16_t ---
-	terminal_get32 :: proc(key: ^c.int32_t, default_: ^c.int32_t) -> ^c.int32_t ---
-
-	color_from_name8 :: proc(name: ^c.int8_t) -> color_t ---
-	// WARN: unimplemented
-	color_from_name16 :: proc(name: ^c.int16_t) -> color_t ---
-	color_from_name32 :: proc(name: ^c.int32_t) -> color_t ---
+    color_from_name8 :: proc(name: cstring) -> color_t ---
+    // ! WARN: unimplemented
+    color_from_name16 :: proc(name: [^]u16) -> color_t ---
+    color_from_name32 :: proc(name: [^]rune) -> color_t ---
 }
 
 set :: proc(s: cstring) -> c.int {
-	return terminal_set8(transmute([^]i8)s)
+    return set8(s)
 }
 
-print :: proc(x: c.int, y: c.int, s: cstring) -> dimensions_t_ {
-	ret: dimensions_t_
-	terminal_print_ext8(x, y, 0, 0, TK_ALIGN_DEFAULT, transmute([^]i8)s, &ret.width, &ret.height)
-	return ret
+print :: proc(x: c.int, y: c.int, s: string) -> dimensions_t_ {
+    ret: dimensions_t_
+    print_ext8(x, y, 0, 0, TK_ALIGN_DEFAULT, strings.clone_to_cstring(s), &ret.width, &ret.height)
+    return ret
 }
 
 measure :: proc(s: cstring) -> dimensions_t_ {
-	ret: dimensions_t_
-	terminal_measure_ext8(0, 0, transmute([^]i8)s, &ret.width, &ret.height)
-	return ret
+    ret: dimensions_t_
+    measure_ext8(0, 0, s, &ret.width, &ret.height)
+    return ret
 }
 
-// BUG: Causes crash on attempt to read buffer in any way
-// Could be corrupted maybe?
-read_str :: proc(x: c.int, y: c.int, buffer: ^cstring, max: c.int) -> c.int {
-	return terminal_read_str8(x, y, transmute([^]i8)buffer, max)
+// BUG: Still crashing
+read_str :: proc(x: c.int, y: c.int, buffer: [dynamic]byte) -> string {
+    len := read_str8(x, y, raw_data(buffer), c.int(len(buffer)))
+    return string(buffer[:len])
 }
 
-get :: proc(key: cstring, default_: cstring = "0") -> cstring {
-	return transmute(cstring)terminal_get8(transmute([^]i8)key, transmute([^]i8)default_)
+get :: proc(key: cstring, default: cstring = "0") -> cstring {
+    return get8(key, default)
 }
 
 color_from_name :: proc(name: cstring) -> color_t {
-	return color_from_name8(transmute([^]i8)name)
+    return color_from_name8(name)
 }
 
 /*
@@ -208,8 +214,8 @@ TK_CONTROL :: 0x71
 TK_ALT :: 0x72
 
 /*
-  * Mouse events/states
-  */
+    * Mouse events/states
+    */
 TK_MOUSE_LEFT :: 0x80 /* Buttons */
 TK_MOUSE_RIGHT :: 0x81
 TK_MOUSE_MIDDLE :: 0x82
@@ -225,16 +231,16 @@ TK_MOUSE_WHEEL :: 0x8B /* Scroll direction and amount */
 TK_MOUSE_CLICKS :: 0x8C /* Number of consecutive clicks */
 
 /*
-  * If key was released instead of pressed, it's code will be OR'ed with TK_KEY_RELEASED:
-  * a) pressed 'A': 0x04
-  * b) released 'A': 0x04|VK_KEY_RELEASED = 0x104
-  */
+    * If key was released instead of pressed, it's code will be OR'ed with TK_KEY_RELEASED:
+    * a) pressed 'A': 0x04
+    * b) released 'A': 0x04|VK_KEY_RELEASED = 0x104
+    */
 TK_KEY_RELEASED :: 0x100
 
 /*
-  * Virtual key-codes for internal terminal states/variables.
-  * These can be accessed via terminal_state function.
-  */
+    * Virtual key-codes for internal terminal states/variables.
+    * These can be accessed via terminal_state function.
+    */
 TK_WIDTH :: 0xC0 /* Terminal window size in cells */
 TK_HEIGHT :: 0xC1
 TK_CELL_WIDTH :: 0xC2 /* Character cell size in pixels */
@@ -249,27 +255,27 @@ TK_EVENT :: 0xCA /* Last dequeued event */
 TK_FULLSCREEN :: 0xCB /* Fullscreen state */
 
 /*
-  * Other events
-  */
+    * Other events
+    */
 TK_CLOSE :: 0xE0
 TK_RESIZED :: 0xE1
 
 /*
-  * Generic mode enum.
-  * Right now it is used for composition option only.
-  */
+    * Generic mode enum.
+    * Right now it is used for composition option only.
+    */
 TK_OFF :: 0
 TK_ON :: 1
 
 /*
-  * Input result codes for terminal_read function.
-  */
+    * Input result codes for terminal_read function.
+    */
 TK_INPUT_NONE :: 0
 TK_INPUT_CANCELLED :: -1
 
 /*
-  * Text printing alignment.
-  */
+    * Text printing alignment.
+    */
 TK_ALIGN_DEFAULT :: 0
 TK_ALIGN_LEFT :: 1
 TK_ALIGN_RIGHT :: 2
