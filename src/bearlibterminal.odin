@@ -5,15 +5,20 @@ import "core:c/libc"
 import "core:fmt"
 import "core:strings"
 
-// NOTE: Need to setup differentiation between target platforms and their libraries
-// For now only supports 64-bit windows
+// NOTE: Don't forget to move the correct shared library to the build folder. Maybe need to find a way to get odin to do this for me automatically?
 when ODIN_OS == .Windows {
-    foreign import bearlibterminal "Windows64/BearLibTerminal.lib"
+	foreign import bearlibterminal "Windows64/BearLibTerminal.lib"
+} else when ODIN_OS == .Linux {
+	when ODIN_ARCH == .i386 {
+		foreign import bearlibterminal "Linux32/libBearLibTerminal.so"
+	} else when ODIN_ARCH == .amd64 {
+		foreign import bearlibterminal "Linux64/libBearLibTerminal.so"
+	}
 }
 
 dimensions_t_ :: struct {
-    width:  c.int,
-    height: c.int,
+	width:  c.int,
+	height: c.int,
 }
 
 color_t :: distinct i32
@@ -21,97 +26,97 @@ color_t :: distinct i32
 @(link_prefix = "terminal_")
 @(default_calling_convention = "c")
 foreign bearlibterminal {
-    open :: proc() -> c.int ---
-    close :: proc() ---
-    refresh :: proc() ---
-    clear :: proc() ---
-    clear_area :: proc(x, y: c.int, w, h: c.int) ---
-    crop :: proc(x, y: c.int, w, h: c.int) ---
-    layer :: proc(index: c.int) ---
-    color :: proc(color: color_t) ---
-    bkcolor :: proc(color: color_t) ---
-    composition :: proc(mode: c.int) ---
-    put :: proc(x, y: c.int, code: c.int) ---
-    put_ext :: proc(x, y: c.int, dx, dy: c.int, code: c.int, corners: ^[4]color_t) ---
-    pick :: proc(x, y: c.int, index: c.int) -> c.int ---
-    pick_color :: proc(x, y: c.int, index: c.int) -> color_t ---
-    pick_bkcolor :: proc(x, y: c.int) -> color_t ---
-    has_input :: proc() -> c.int ---
-    state :: proc(code: c.int) -> c.int ---
-    read :: proc() -> c.int ---
-    peek :: proc() -> c.int ---
-    delay :: proc(period: c.int) ---
-    put_array :: proc(x, y: c.int, w, h: c.int, data: [^]c.uint8_t, row_stride: c.int, column_stride: c.int, layout: rawptr, char_size: c.int) -> c.int ---
+	open :: proc() -> c.int ---
+	close :: proc() ---
+	refresh :: proc() ---
+	clear :: proc() ---
+	clear_area :: proc(x, y: c.int, w, h: c.int) ---
+	crop :: proc(x, y: c.int, w, h: c.int) ---
+	layer :: proc(index: c.int) ---
+	color :: proc(color: color_t) ---
+	bkcolor :: proc(color: color_t) ---
+	composition :: proc(mode: c.int) ---
+	put :: proc(x, y: c.int, code: c.int) ---
+	put_ext :: proc(x, y: c.int, dx, dy: c.int, code: c.int, corners: ^[4]color_t) ---
+	pick :: proc(x, y: c.int, index: c.int) -> c.int ---
+	pick_color :: proc(x, y: c.int, index: c.int) -> color_t ---
+	pick_bkcolor :: proc(x, y: c.int) -> color_t ---
+	has_input :: proc() -> c.int ---
+	state :: proc(code: c.int) -> c.int ---
+	read :: proc() -> c.int ---
+	peek :: proc() -> c.int ---
+	delay :: proc(period: c.int) ---
+	put_array :: proc(x, y: c.int, w, h: c.int, data: [^]c.uint8_t, row_stride: c.int, column_stride: c.int, layout: rawptr, char_size: c.int) -> c.int ---
 }
 
-@private
+@(private)
 @(link_prefix = "terminal_")
 @(default_calling_convention = "c")
 foreign bearlibterminal {
-    set8 :: proc(value: cstring) -> c.int ---
-    // ! WARN: unimplemented
-    set16 :: proc(value: [^]u16) -> c.int ---
-    set32 :: proc(value: [^]rune) -> c.int ---
+	set8 :: proc(value: cstring) -> c.int ---
+	// ! WARN: unimplemented
+	set16 :: proc(value: [^]u16) -> c.int ---
+	set32 :: proc(value: [^]rune) -> c.int ---
 
-    font8 :: proc(name: cstring) ---
-    // ! WARN: unimplemented
-    font16 :: proc(name: [^]u16) ---
-    font32 :: proc(name: [^]rune) ---
+	font8 :: proc(name: cstring) ---
+	// ! WARN: unimplemented
+	font16 :: proc(name: [^]u16) ---
+	font32 :: proc(name: [^]rune) ---
 
-    print_ext8 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: cstring, out_w, out_h: ^c.int) ---
-    // ! WARN: unimplemented
-    print_ext16 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
-    print_ext32 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
+	print_ext8 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: cstring, out_w, out_h: ^c.int) ---
+	// ! WARN: unimplemented
+	print_ext16 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
+	print_ext32 :: proc(x, y: c.int, w, h: c.int, align: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
 
-    measure_ext8 :: proc(w, h: c.int, s: cstring, out_w, out_h: ^c.int) ---
-    // ! WARN: unimplemented
-    measure_ext16 :: proc(w, h: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
-    measure_ext32 :: proc(w, h: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
+	measure_ext8 :: proc(w, h: c.int, s: cstring, out_w, out_h: ^c.int) ---
+	// ! WARN: unimplemented
+	measure_ext16 :: proc(w, h: c.int, s: [^]u16, out_w, out_h: ^c.int) ---
+	measure_ext32 :: proc(w, h: c.int, s: [^]rune, out_w, out_h: ^c.int) ---
 
-    read_str8 :: proc(x, y: c.int, buffer: [^]byte, max: c.int) -> c.int ---
-    // ! WARN: unimplemented
-    read_str16 :: proc(x, y: c.int, buffer: [^]u16, max: c.int) -> c.int ---
-    read_str32 :: proc(x, y: c.int, buffer: [^]rune, max: c.int) -> c.int ---
+	read_str8 :: proc(x, y: c.int, buffer: [^]byte, max: c.int) -> c.int ---
+	// ! WARN: unimplemented
+	read_str16 :: proc(x, y: c.int, buffer: [^]u16, max: c.int) -> c.int ---
+	read_str32 :: proc(x, y: c.int, buffer: [^]rune, max: c.int) -> c.int ---
 
-    get8 :: proc(key: cstring, default: cstring) -> cstring ---
-    // ! WARN: unimplemented
-    get16 :: proc(key: [^]u16, default: [^]u16) -> [^]u16 ---
-    get32 :: proc(key: [^]rune, default: [^]rune) -> [^]rune ---
+	get8 :: proc(key: cstring, default: cstring) -> cstring ---
+	// ! WARN: unimplemented
+	get16 :: proc(key: [^]u16, default: [^]u16) -> [^]u16 ---
+	get32 :: proc(key: [^]rune, default: [^]rune) -> [^]rune ---
 
-    color_from_name8 :: proc(name: cstring) -> color_t ---
-    // ! WARN: unimplemented
-    color_from_name16 :: proc(name: [^]u16) -> color_t ---
-    color_from_name32 :: proc(name: [^]rune) -> color_t ---
+	color_from_name8 :: proc(name: cstring) -> color_t ---
+	// ! WARN: unimplemented
+	color_from_name16 :: proc(name: [^]u16) -> color_t ---
+	color_from_name32 :: proc(name: [^]rune) -> color_t ---
 }
 
 set :: proc(s: cstring) -> c.int {
-    return set8(s)
+	return set8(s)
 }
 
 print :: proc(x: c.int, y: c.int, s: string) -> dimensions_t_ {
-    ret: dimensions_t_
-    print_ext8(x, y, 0, 0, TK_ALIGN_DEFAULT, strings.clone_to_cstring(s), &ret.width, &ret.height)
-    return ret
+	ret: dimensions_t_
+	print_ext8(x, y, 0, 0, TK_ALIGN_DEFAULT, strings.clone_to_cstring(s), &ret.width, &ret.height)
+	return ret
 }
 
 measure :: proc(s: cstring) -> dimensions_t_ {
-    ret: dimensions_t_
-    measure_ext8(0, 0, s, &ret.width, &ret.height)
-    return ret
+	ret: dimensions_t_
+	measure_ext8(0, 0, s, &ret.width, &ret.height)
+	return ret
 }
 
 // BUG: Still crashing
 read_str :: proc(x: c.int, y: c.int, buffer: [dynamic]byte) -> string {
-    len := read_str8(x, y, raw_data(buffer), c.int(len(buffer)))
-    return string(buffer[:len])
+	len := read_str8(x, y, raw_data(buffer), c.int(len(buffer)))
+	return string(buffer[:len])
 }
 
 get :: proc(key: cstring, default: cstring = "0") -> cstring {
-    return get8(key, default)
+	return get8(key, default)
 }
 
 color_from_name :: proc(name: cstring) -> color_t {
-    return color_from_name8(name)
+	return color_from_name8(name)
 }
 
 /*
